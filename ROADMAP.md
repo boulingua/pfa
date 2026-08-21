@@ -4,7 +4,7 @@ Build plan for the boulingua Persian-as-a-Foreign-Language course (`pfa`,
 signature accent `#B5892B` light / `#E7C97E` dark, hover `#8C6A21`, pentagon
 mark). This repo is currently a scaffold (LICENSE, README, brand icons) and is
 flagged "coming soon" on the world map. This document is the actionable plan to
-build the **entire** course — content and website — from the `pagegen` template
+build the **entire** course — content and website — on the `kit` platform
 and the `curriculum` framework, conforming to the boulingua standards.
 
 ---
@@ -104,8 +104,9 @@ Concrete, opinionated calls to make before authoring a single unit.
   Naskh Arabic** (SIL OFL) is the fallback/creative face for literary
   quotations and has full coverage of the Persian-specific letters and digits
   as a safety net. Confirm the pairing with a side-by-side legibility check in
-  M1. Latin text keeps the template's Source Sans 3. Self-host both as WOFF2
-  under `static/fonts/`; declare `unicode-range` so Perso-Arabic glyphs
+  M1. Latin text keeps the template's Source Sans 3. Both are added to the kit's font manifest
+  (F3), which builds the subsets and emits the `unicode-range` rules so Perso-Arabic
+  glyphs
   (including U+067E پ, U+0686 چ, U+0698 ژ, U+06AF گ and the Persian digit
   block U+06F0–U+06F9) come from the chosen face and Latin from Source Sans.
 - **TTS → the survey is done, and Persian is well covered.** This entry used to
@@ -130,62 +131,85 @@ Concrete, opinionated calls to make before authoring a single unit.
   **`fa_IR-ganji_adabi-medium`** — a literary register — is the natural second
   speaker, which gives `pfa` two distinct voices for dialogue and a register-apt
   reader for the classical-literature strand (§5). Voice IDs are read from
-  **`audiogen/voices.yml`** (relocating to `kit/audio/voices.yml` at F1) and are
+  **`kit/audio/voices.yml`**, the single source of truth for them, and are
   never hand-typed; a transliterated ID is how a 404 gets written into a download
-  script, and the old instruction to "add any viable voice to `audiogen`'s voice
-  table" names a mechanism that no longer exists. **What stays open is an
+  script, and the old instruction to "add any viable voice to the voice table by
+  hand" names a mechanism that no longer exists. **What stays open is an
   audition, not a search:** smoke-test on normal unvocalised running Persian
   (ezāfe-linked phrases, colloquial contractions) before bulk generation.
   **Fallback ladder:** `amir` → `ganji` / `ganji_adabi` / `reza_ibrahim` (same
   locale, all CC0) → **recorded human native-speaker audio for A1 core**, with
-  `audiogen` coverage marked partial. Never an Arabic voice: the script is shared,
+  audio coverage marked partial. Never an Arabic voice: the script is shared,
   the phonology is not, and voices are never substituted across languages.
 
 ---
 
-## 3. Instantiation from pagegen
+## 3. Instantiation from the kit
 
-Stand up the site by copying the template verbatim, then changing only the
-marked values.
+Stand up the site by importing the kit, then changing only the marked values.
+Nothing below copies code: the course repo carries content, marks, materials,
+brand and configuration, and no code at all.
 
-1. **Copy the template** into this repo (preserve the existing `brand/`,
-   `LICENSE`, `README.md`, `ROADMAP.md`): bring over `hugo.toml`, `go.mod`,
-   `archetypes/`, `content/`, `layouts/`, `assets/`, `data/`, `i18n/`,
-   `static/`, `scripts/`, `.github/`, `lychee.toml`, `.gitignore`,
-   `.gitattributes`, `.nojekyll`, `LICENSE-CONTENT.md`, `CITATION.cff`.
-2. **Edit `hugo.toml`** — change only the marked keys: `baseURL =
+1. **Create the repo around the kit import** (preserving the existing `brand/`,
+   `LICENSE`, `README.md`, `ROADMAP.md`): a short `hugo.toml` — the marked keys
+   below plus `[module] [[module.imports]] path = "github.com/boulingua/kit"` —
+   `go.mod`/`go.sum` with `require github.com/boulingua/kit v1.0.0`,
+   `boulingua.yml` (the only per-course config the gate battery reads), the
+   twelve-line `.github/workflows/deploy.yml` taken verbatim from
+   `kit/templates/deploy.yml`, an empty `content/` skeleton, the legal pages,
+   `LICENSE-CONTENT.md`, `CITATION.cff`, `lychee.toml`, `.gitignore`,
+   `.gitattributes`, `.nojekyll`. `layouts/`, `assets/`, `scripts/`, `i18n/` and
+   `archetypes/` are **not** copied and must never appear in `pfa/` — they are
+   the drift surface, and a file that is not in the repo cannot fork. Hugo
+   resolves them from the module at the pinned tag; CI checks the same tag out
+   for the gate battery, and `bin/kit` does it locally.
+2. **Vendor `_materials/`** — `kit materials sync` assembles the `.sty` files,
+   the fonts and the icon PDFs flat into `pfa/_materials/`, because XeLaTeX
+   cannot read a Hugo module. It is the only vendored surface in the repo, every
+   byte digest-locked in `kit.lock`, so a hand edit fails the next `bin/kit
+   check`. This replaces the old step that told authors to copy `_materials/`
+   from the template, which was never possible: `pagegen/_materials/` did not
+   exist.
+3. **Edit `hugo.toml`** — change only the marked keys: `baseURL =
    "https://boulingua.github.io/pfa/"`; `title = "Persian (Farsi) — S. Le
    Boulanger"`; `languageCode`/`defaultContentLanguage = "en"` (chrome stays
    English/lingua-franca, Persian content wrapped per-run, §2/§9);
    `[params].navTitle = "Persian"`, `description`, `keywords`
    (`persian,farsi,cefr,rtl,course,oer`); `params.code = "pfa"` (selects the
-   accent already in `data/accents.yaml`: `#B5892B` / hover `#8C6A21` / dark
-   `#E7C97E`); `[[params.social]].url =
+   accent already in the kit's `data/accents.yaml`: `#B5892B` / hover `#8C6A21` /
+   dark `#E7C97E`) — this key matters more now, not less, because the kit ships a
+   neutral graphite `template` accent, so a course that forgets it looks
+   obviously wrong instead of looking like DaF, which is what the old template
+   did; gate F7-C3 makes an unset code fatal; `[[params.social]].url =
    "https://github.com/boulingua/pfa"`; `[params.plausible].domain =
    "boulingua.github.io/pfa"` (keep this block **last** under `[params]` —
-   the TOML sub-table trap); `[[menu.main]]` sections mirroring `content/`:
-   Script · A1 · A2 · B1 · Materials · About · Legal.
-3. **Enable RTL affordances** — turn on hugo-coder's RTL layout support and add
-   the `[dir="rtl"]` / `:lang(fa)` CSS layer to `assets/css/custom.css` (built
-   jointly with `afl`, see §8); wire the `{{< fa >}}` shortcode analogous to
-   Arabic's `{{< ar >}}`.
-4. **Regenerate brand assets** — `python brand/make_icon.py` (or
-   `python brand/make_icon.py pfa` if run from a different `code`) to render the
-   pentagon + favicons at `#B5892B`; confirm `data/accents.yaml` already carries
-   the `pfa` row (verified: `accent: "#B5892B"`, `hover: "#8C6A21"`,
-   `dark: "#E7C97E"`, `dark_hover: "#EFDCA9"`) so no CSS colour values are
-   hand-edited.
-5. **Fill legal placeholders** — the ⟨…⟩ fields in `impressum` / `datenschutz` /
-   `haftungsausschluss`; keep the VG Wort METIS disclosure in `datenschutz`, and
-   remove the `|| true` on `verify_legal_placeholders.py` in
-   `.github/workflows/build-deploy.yml` once genuinely filled (the template
-   ships with `|| true` because pagegen itself has unfilled placeholders).
-6. **First green build** — `hugo server` locally to confirm the accent, font
-   and (initially, mostly-empty) RTL chrome render; then push to `main` so
-   `build-deploy.yml` builds, runs the gate battery, and deploys to GitHub
-   Pages; enable Pages (source: GitHub Actions). Milestone: a live,
-   empty-but-styled Persian-accent site with the Perso-Arabic font wired and a
-   working RTL smoke page.
+   the TOML sub-table trap: everything after a header is scoped to it, so a
+   sub-table opened early silently swallows the keys above it);
+   `[[menu.main]]` sections mirroring `content/`: Script · A1 · A2 · B1 ·
+   Materials · About · Legal.
+4. **Declare the RTL affordances in `boulingua.yml`** — `script_tier: arabic`
+   and `target_language: fa`. The `[dir="rtl"]` / `:lang(fa)` layer and the
+   target-language island are kit code, built jointly with `afl` (§8), and the
+   island is the shared `{{< tl >}}` rather than a per-course `{{< fa >}}`: it
+   emits `lang` always and `dir="rtl"` because the tier says so. There is no
+   course CSS file to add a layer to, which is the point.
+5. **Regenerate brand assets** — run the kit's `make_icon.py` for `pfa` to render
+   the pentagon + favicons at `#B5892B` into `brand/`, the one brand surface the
+   course owns; confirm the kit's `data/accents.yaml` already carries the `pfa`
+   row (verified: `accent: "#B5892B"`, `hover: "#8C6A21"`, `dark: "#E7C97E"`,
+   `dark_hover: "#EFDCA9"`) so no colour value is hand-written anywhere.
+6. **Fill legal placeholders** — the ⟨…⟩ fields in `impressum` / `datenschutz` /
+   `haftungsausschluss`; keep the VG Wort METIS disclosure in `datenschutz`. The
+   placeholder gate is blocking as shipped: there is no `|| true` left to remove,
+   because suppressions are prohibited org-wide.
+7. **First green build** — `hugo server` locally to confirm the accent, font and
+   (initially, mostly-empty) RTL chrome render; `hugo --minify --gc
+   --panicOnWarning` and `bin/kit check` clean, a warning now being a failed
+   build; then push to `main` so the twelve-line `deploy.yml` calls the shared
+   battery and deploys to GitHub Pages; enable Pages (source: GitHub Actions).
+   Milestone: a live, empty-but-styled Persian-accent site with the Perso-Arabic
+   font wired, a working RTL smoke page, and no `layouts/`, `assets/`,
+   `scripts/`, `i18n/` or `archetypes/` in the repo.
 
 ---
 
@@ -288,27 +312,29 @@ unit incl. materials + audio.
   lang="fa">`, plus a `dir`-aware block callout for worked examples —
   implemented once and **shared with `afl`** (§8) since the mechanics (wrap a
   run, flip direction, keep surrounding English LTR) are language-agnostic.
-- **RTL/bidi CSS.** Extend `assets/css/custom.css` with logical properties and
+- **RTL/bidi CSS.** Lands in the kit (F4b), not here — logical properties and
   a `[dir="rtl"]` / `:lang(fa)` layer so Persian runs, tables and lists align
-  right while English chrome stays LTR; self-host Vazirmatn (primary) + Noto
+  right while English chrome stays LTR. Shared with `afl`, which is why it is
+  upstream; self-host Vazirmatn (primary) + Noto
   Naskh Arabic (fallback) WOFF2 with `unicode-range` splits for the
   Persian-specific code points (§2) — the shared RTL base built with `afl`,
   extended with Persian's digit and letter ranges.
-- **Materials pipeline (committed).** Decks from **slidegen** (Beamer) and
-  worksheets from **sheetgen** — both already XeLaTeX + fontspec, so extend the
+- **Materials pipeline (committed).** Decks and worksheets from the kit's LaTeX
+  templates (`kit/latex/`, vendored into `_materials/`) — both already
+  XeLaTeX + fontspec, so extend the
   Arabic-script branch (polyglossia + bidi, or `\arabicfont` via `fontspec`)
   with a Persian language variant: `\setotherlanguage{farsi}` (polyglossia
   supports Persian directly), Vazirmatn/Noto Naskh as `\newfontfamily`, RTL
   environments for Persian blocks, Persian digit rendering. Build locally with
-  `build_materials_latex.py`; commit PDFs under `static/materials/` (+ ODP
+  the kit's `build_materials_latex.py`; commit PDFs under `static/materials/` (+ ODP
   editable decks) and exam PDFs under `static/downloads/`. CI only verifies —
   no TeX Live in the deploy path.
-- **Native-voice audio.** `audiogen` with **`fa_IR-amir-medium`** (CC0, §2) and
+- **Native-voice audio.** `kit/audio/build_audio.py` with **`fa_IR-amir-medium`** (CC0, §2) and
   **`fa_IR-ganji_adabi-medium`** (CC0) as the second, literary-register speaker →
   OGG/Opus committed under `static/materials/audio/` and referenced via the
-  `audio-block` partial. Both are rows in `audiogen/voices.yml`
-  (`kit/audio/voices.yml` from F1); fetch them with `get_voices.sh` and never
-  retype an ID by hand. **Availability note, corrected:** Persian voices exist and
+  `audio-block` partial. Both are rows in `kit/audio/voices.yml`, the registry
+  that is the single source of truth for voice IDs; fetch them with
+  `kit/audio/get_voices.sh` and never retype an ID by hand. **Availability note, corrected:** Persian voices exist and
   are licence-clear — four of the five are CC0. What is unconfirmed is *quality*
   on unvocalised running Persian, so audition in M1 before bulk generation; the
   recorded-audio fallback (§2/§9) sits behind the voice ladder, not in front of
@@ -321,7 +347,7 @@ unit incl. materials + audio.
 
 ## 7. VG Wort — pixel assignment for ALL content pages
 
-**Required and non-skippable.** Per `pagegen/docs/vgwort-standard.md`, every
+**Required and non-skippable.** Per `kit/docs/vgwort-standard.md`, every
 editorial page ≥ 1800 rendered characters gets exactly **one** VG Wort
 Zählmarke on exactly **one** URL. This is the author's statutory remuneration
 right, not tracking — emitted static, JS-free, no consent gate, loading eagerly
@@ -365,7 +391,7 @@ for every reader, via the shared resolver `layouts/_partials/vgwort/url.html`.
   nothing.
 - **M1 — RTL foundation (L), shared with Arabic.** Perso-Arabic web fonts
   self-hosted (Vazirmatn + Noto Naskh Arabic, unicode-range split), `{{< fa >}}`
-  shortcode, RTL/bidi CSS layer, slidegen/sheetgen Persian branch,
+  shortcode, RTL/bidi CSS layer, the `kit/latex/` Persian branch,
   `fa_IR-amir-medium` auditioned on unvocalised running Persian — the survey is
   already done (§2), so this is a listening test, not a search. *Depends on:* M0.
   **Gating milestone** — no content authoring at scale until RTL renders
@@ -400,7 +426,7 @@ narrowed per §2/§9), all CI gates green, RTL correct on site and in PDFs,
   audio problem, not `pfa`. What remains is an **audition** in M1: does the
   synthesis handle unvocalised running Persian, ezāfe-linked phrases and
   colloquial contractions? If nothing clears the smoke test, fall to the other CC0
-  `fa_IR` voices, then to recorded human audio for A1 core with audiogen coverage
+  `fa_IR` voices, then to recorded human audio for A1 core with audio coverage
   marked partial. *(Open as a quality question only; it no longer blocks
   planning.)*
 - **Medium language (en vs de).** Recommended `en` for chrome consistency;
@@ -418,7 +444,7 @@ narrowed per §2/§9), all CI gates green, RTL correct on site and in PDFs,
 - **LaTeX Perso-Arabic shaping.** polyglossia's Farsi support + bidi must
   render Persian-specific letters, digits and ligatures correctly in decks and
   worksheets; budget iteration time in M1, reusing lessons from the Arabic
-  branch of slidegen/sheetgen. *(Risk.)*
+  branch of the `kit/latex/` templates. *(Risk.)*
 - **Register policy drift (formal vs. colloquial).** The written-formal vs.
   spoken-colloquial split (§1) needs one style-guide rule (e.g. "formal
   written forms are the reference spine, with an explicit colloquial
