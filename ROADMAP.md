@@ -53,9 +53,12 @@ technical cost alone.
    *advantage* relative to Arabic: grammar can move faster once the script is
    secure, freeing unit budget for vocabulary, register and the
    ezāfe/preposition system.
-5. **Native-voice TTS coverage** — Persian is far less covered by open-source
-   TTS than Arabic; verifying a production-quality, openly-licensed Piper
-   voice (or committing to a fallback) gates the audio pipeline (§2, §9).
+5. **Native-voice TTS coverage — better than Arabic's, not worse.** The
+   assumption that Persian is the thinner of the two RTL courses here is
+   backwards: upstream ships **five** `fa_IR` voices and **four of them are
+   `CC0`**, while **no** Arabic voice states a licence at all. Audio is not gated
+   on finding a voice. It is gated on auditioning one for quality on unvocalised
+   running Persian (§2, §9).
 
 ---
 
@@ -105,17 +108,38 @@ Concrete, opinionated calls to make before authoring a single unit.
   under `static/fonts/`; declare `unicode-range` so Perso-Arabic glyphs
   (including U+067E پ, U+0686 چ, U+0698 ژ, U+06AF گ and the Persian digit
   block U+06F0–U+06F9) come from the chosen face and Latin from Source Sans.
-- **TTS → open decision, verify before committing.** Piper's officially
-  maintained voice catalogue (`rhasspy/piper-voices`) has historically had far
-  thinner Persian coverage than Arabic — where Arabic could rely on
-  `ar_JO-kareem`, no comparably-established, production-quality, openly-licensed
-  Persian voice is confirmed as of this writing. **Flagged as an open decision
-  (§9), not assumed.** Before committing audio: survey `rhasspy/piper-voices`
-  and the wider community-voice ecosystem for any `fa_IR` voice; if one exists,
-  smoke-test it on normal unvocalised running Persian (ezāfe-linked phrases,
-  colloquial contractions); if none is production-quality, fall back to
-  **recorded human native-speaker audio for A1 core**, with `audiogen`
-  coverage marked partial. Add any viable voice to `audiogen`'s voice table.
+- **TTS → the survey is done, and Persian is well covered.** This entry used to
+  defer the question to an M1 survey and to contrast Persian unfavourably with
+  Arabic's `ar_JO-kareem`. The comparison was backwards. Upstream
+  `rhasspy/piper-voices` (catalogue snapshot 2026-08-21, 174 voices) ships
+  **five** Persian voices, all at `medium` tier, with these licences copied
+  verbatim from their MODEL_CARDs:
+
+  | voice | quality | licence | usable |
+  |---|---|---|---|
+  | `fa_IR-amir-medium` | medium | `CC0` | yes — **primary** |
+  | `fa_IR-ganji-medium` | medium | `CC0` | yes |
+  | `fa_IR-ganji_adabi-medium` | medium | `CC0` | yes — literary register |
+  | `fa_IR-reza_ibrahim-medium` | medium | `CC0` | yes |
+  | `fa_IR-gyro-medium` | medium | `See URL` | no — an unstated licence is not permission |
+
+  Arabic has **no** voice with a stated licence: both `ar_JO-kareem` models read
+  `License: See URL` and point at a repository carrying no licence statement. So
+  Persian is the better-provisioned of the two RTL courses, not the poorer one.
+  **Decision:** **`fa_IR-amir-medium`** is the primary voice, and
+  **`fa_IR-ganji_adabi-medium`** — a literary register — is the natural second
+  speaker, which gives `pfa` two distinct voices for dialogue and a register-apt
+  reader for the classical-literature strand (§5). Voice IDs are read from
+  **`audiogen/voices.yml`** (relocating to `kit/audio/voices.yml` at F1) and are
+  never hand-typed; a transliterated ID is how a 404 gets written into a download
+  script, and the old instruction to "add any viable voice to `audiogen`'s voice
+  table" names a mechanism that no longer exists. **What stays open is an
+  audition, not a search:** smoke-test on normal unvocalised running Persian
+  (ezāfe-linked phrases, colloquial contractions) before bulk generation.
+  **Fallback ladder:** `amir` → `ganji` / `ganji_adabi` / `reza_ibrahim` (same
+  locale, all CC0) → **recorded human native-speaker audio for A1 core**, with
+  `audiogen` coverage marked partial. Never an Arabic voice: the script is shared,
+  the phonology is not, and voices are never substituted across languages.
 
 ---
 
@@ -196,10 +220,14 @@ marked values.
   `framework: boulingua-curriculum`, `framework_version`, `language: fa`,
   `level: A1` (then A2, B1), `declared_conformance: core`, and `realizations:`
   mapping each `implements_id` to its Persian can-do (`fa:` key, Perso-Arabic
-  script). Must pass `curriculum/scripts/id-audit.sh` (format, uniqueness,
-  every `implements:` resolves to a real in-scope scale/level). Wire as an
-  opt-in CI gate in `build-deploy.yml`, alongside the template's reserved
-  `verify_cefr.py` slot.
+  script), published at the **repo root**.
+- **Gate.** The reusable workflow
+  `boulingua/.github/.github/workflows/course-build.yml@v1` runs
+  `python .curriculum/scripts/conformance_audit.py resolve --manifest conformance.yml --content content`,
+  which covers format, uniqueness and that every `implements:` resolves to a real
+  in-scope scale/level. `id-audit.sh` audits the framework's *own* level files and
+  **cannot** validate this repo. Do not wire it here. Keep the template's reserved
+  `verify_cefr.py` slot in `build-deploy.yml` alongside it.
 
 ---
 
@@ -246,8 +274,8 @@ unit incl. materials + audio.
   dialogue (or a recorded-audio fallback flagged per §2/§9), (5) all Persian
   wrapped `dir="rtl" lang="fa"`, (6) a registered VG Wort mark (§7), (7) a
   green build with all gates passing. A phase is "done" when its section
-  landing lists every unit + exam and `conformance.yml` passes `id-audit.sh` at
-  that level.
+  landing lists every unit + exam and `conformance.yml` is green under the §4
+  gate at that level.
 
 ---
 
@@ -275,11 +303,16 @@ unit incl. materials + audio.
   `build_materials_latex.py`; commit PDFs under `static/materials/` (+ ODP
   editable decks) and exam PDFs under `static/downloads/`. CI only verifies —
   no TeX Live in the deploy path.
-- **Native-voice audio.** `audiogen` / a verified Piper `fa_IR` voice (or the
-  recorded-audio fallback, §2/§9) → OGG/Opus committed under
-  `static/materials/audio/` and referenced via the `audio-block` partial.
-  **Decision/availability note:** no Persian Piper voice is assumed
-  production-ready; confirm during M1 before bulk generation.
+- **Native-voice audio.** `audiogen` with **`fa_IR-amir-medium`** (CC0, §2) and
+  **`fa_IR-ganji_adabi-medium`** (CC0) as the second, literary-register speaker →
+  OGG/Opus committed under `static/materials/audio/` and referenced via the
+  `audio-block` partial. Both are rows in `audiogen/voices.yml`
+  (`kit/audio/voices.yml` from F1); fetch them with `get_voices.sh` and never
+  retype an ID by hand. **Availability note, corrected:** Persian voices exist and
+  are licence-clear — four of the five are CC0. What is unconfirmed is *quality*
+  on unvocalised running Persian, so audition in M1 before bulk generation; the
+  recorded-audio fallback (§2/§9) sits behind the voice ladder, not in front of
+  it.
 - **Thumbnails & downloads.** `render_thumbs.py` for deck/worksheet previews;
   `verify_downloads.py` gate confirms every referenced material exists and is
   attributed. Downloads hub and materials hub carry **no** VG Wort pixel (§7).
@@ -332,8 +365,9 @@ for every reader, via the shared resolver `layouts/_partials/vgwort/url.html`.
   nothing.
 - **M1 — RTL foundation (L), shared with Arabic.** Perso-Arabic web fonts
   self-hosted (Vazirmatn + Noto Naskh Arabic, unicode-range split), `{{< fa >}}`
-  shortcode, RTL/bidi CSS layer, slidegen/sheetgen Persian branch, Piper `fa_IR`
-  voice surveyed and smoke-tested (or fallback decided). *Depends on:* M0.
+  shortcode, RTL/bidi CSS layer, slidegen/sheetgen Persian branch,
+  `fa_IR-amir-medium` auditioned on unvocalised running Persian — the survey is
+  already done (§2), so this is a listening test, not a search. *Depends on:* M0.
   **Gating milestone** — no content authoring at scale until RTL renders
   correctly on site and in PDFs. **Coordinate with `afl`'s own M1:** design
   the shortcode mechanics, `[dir="rtl"]` CSS layer and LaTeX bidi/polyglossia
@@ -342,8 +376,8 @@ for every reader, via the shared resolver `layouts/_partials/vgwort/url.html`.
   second course's M1 cheaper.
 - **M2 — Script stage live (M).** `content/script/` (6–8 units) + glossary +
   pronunciation appendix, materials, audio, VG Wort marks. *Depends on:* M1.
-- **M3 — MVP: A1 live (L).** 10–12 A1 units + exams + `conformance.yml` passing
-  `id-audit.sh` at A1. *Depends on:* M2. **First flip-worthy state.**
+- **M3 — MVP: A1 live (L).** 10–12 A1 units + exams + `conformance.yml` green
+  under the §4 gate at A1. *Depends on:* M2. **First flip-worthy state.**
 - **M4 — A2 (L).** *Depends on:* M3.
 - **M5 — B1 + full appendices, incl. classical-literature reader (L).**
   `declared_conformance: core` complete. *Depends on:* M4.
@@ -358,12 +392,17 @@ narrowed per §2/§9), all CI gates green, RTL correct on site and in PDFs,
 
 ## 9. Open decisions & risks
 
-- **Piper Persian voice availability — highest content risk.** No
-  production-quality, openly-licensed `fa_IR` Piper voice is confirmed as of
-  this writing (contrast Arabic's `ar_JO-kareem`). Resolve early in M1: survey
-  `rhasspy/piper-voices` and the wider community-voice ecosystem; if nothing
-  clears the smoke test, fall back to recorded human audio for A1 core and mark
-  audiogen coverage partial. *(Open — blocks bulk audio generation.)*
+- **Piper Persian voice — resolved in the course's favour, and no longer the
+  highest content risk.** Availability and licence are settled: five `fa_IR`
+  voices upstream, four of them `CC0`, primary `fa_IR-amir-medium` (§2). The
+  contrast this entry once drew with Arabic's `ar_JO-kareem` was the wrong way
+  round — that voice states no licence at all, so `afl` is the RTL course with the
+  audio problem, not `pfa`. What remains is an **audition** in M1: does the
+  synthesis handle unvocalised running Persian, ezāfe-linked phrases and
+  colloquial contractions? If nothing clears the smoke test, fall to the other CC0
+  `fa_IR` voices, then to recorded human audio for A1 core with audiogen coverage
+  marked partial. *(Open as a quality question only; it no longer blocks
+  planning.)*
 - **Medium language (en vs de).** Recommended `en` for chrome consistency;
   the Gesamtschule audience argues for German scaffolding, same tension as
   Arabic. Decide before M2; prefer the same answer as `afl` for consistency
