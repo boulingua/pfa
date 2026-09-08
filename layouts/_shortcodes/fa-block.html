@@ -1,0 +1,32 @@
+{{/*
+  fa-block — a BLOCK-level Persian passage: a model sentence, a dialogue turn,
+  a vocabulary column, a poetry couplet.
+
+  Sets `dir="rtl" lang="fa"` on a block container, so the text aligns to the
+  start of the right-to-left run and any list markers, table cells or nested
+  punctuation follow Persian order. English glosses belong outside the block
+  (or inside a `gloss` argument), never inside it — mixing the two inside one
+  RTL container is exactly what produces the classic bidi punctuation bugs.
+
+  Args:
+    gloss = optional English gloss, rendered LTR beneath the Persian.
+    tr    = optional transliteration, rendered LTR beneath the Persian.
+  Inner Markdown is rendered as a block.
+
+  Example:
+    {{< fa-block tr="salām, man Sārā hastam." gloss="Hello, I am Sara." >}}
+    سلام، من سارا هستم.
+    {{< /fa-block >}}
+*/}}
+{{- $tr := .Get "tr" -}}
+{{- $gloss := .Get "gloss" -}}
+<div class="fa-block" dir="rtl" lang="fa">
+{{ .Inner | .Page.RenderString (dict "display" "block") }}
+</div>
+{{- if or $tr $gloss }}
+<p class="fa-gloss" dir="ltr" lang="en">
+  {{- with $tr }}<em class="fa-translit">{{ . }}</em>{{ end -}}
+  {{- if and $tr $gloss }} · {{ end -}}
+  {{- with $gloss }}<span class="fa-meaning">{{ . }}</span>{{ end -}}
+</p>
+{{- end }}

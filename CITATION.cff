@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use or cite this course, please use the following metadata."
+title: "PFA — Persian as a Foreign Language (script stage, A1–B1)"
+abstract: >-
+  A free, openly-licensed reference course in Modern Persian (Farsi,
+  standard Iranian variety) for German Gesamtschule learners and
+  independent self-studiers. A pre-A1 script-onboarding stage covering
+  the Perso-Arabic alphabet precedes CEFR levels A1, A2 and B1; units
+  are traceable to descriptor identifiers of the boulingua curriculum
+  framework. Persian is set in the native script throughout, with
+  scaffolded transliteration that fades out after A1.
+type: dataset
+authors:
+  - family-names: "Le Boulanger"
+    given-names: "S."
+    email: "277736839+s-leboulanger@users.noreply.github.com"
+repository-code: "https://github.com/boulingua/pfa"
+url: "https://boulingua.github.io/pfa/"
+license:
+  - MIT
+  - CC-BY-SA-4.0
+keywords:
+  - "Persian"
+  - "Farsi"
+  - "فارسی"
+  - "CEFR"
+  - "A1"
+  - "A2"
+  - "B1"
+  - "OER"
+  - "right-to-left"

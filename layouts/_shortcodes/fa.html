@@ -1,0 +1,22 @@
+{{/*
+  fa — an INLINE Persian run inside otherwise left-to-right English prose.
+
+  Wraps its inner text in `dir="rtl" lang="fa"` so the bidi algorithm treats the
+  Persian as its own embedded run: neutral characters at the edges (brackets,
+  full stops, quotation marks) stay with the surrounding English instead of
+  being dragged into the Persian run, and the Perso-Arabic face declared for
+  `:lang(fa)` in assets/css/custom.css applies.
+
+  Args: none. Inner Markdown is rendered inline.
+  Example:
+    The word for book is {{< fa >}}کتاب{{< /fa >}} (*ketāb*).
+
+  Use {{< fa-block >}} instead for a whole sentence, dialogue turn or list —
+  anything that should occupy its own right-aligned block.
+
+  The mechanics here are language-agnostic and are meant to be shared with the
+  Arabic course (`afl`), which needs the same wrap with `lang="ar"`; only the
+  font stack and the unicode ranges differ. See ROADMAP §6, §8.
+*/}}
+{{- $t := .Get "t" -}}
+<span class="fa-inline" dir="rtl" lang="fa"{{ with $t }} title="{{ . }}"{{ end }}>{{ .Inner | .Page.RenderString }}</span>

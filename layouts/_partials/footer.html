@@ -1,0 +1,40 @@
+{{/*
+  Override of hugo-coder's footer.html with the boulingua footer link strip,
+  retargeted at this course's sections (stage, levels, appendices, sister
+  sites, legal, contact). Chrome stays English; the legal pages stay German,
+  as they are statements under German law.
+*/}}
+{{- if (or (not .Site.Params.hideFooter) (eq .Site.Params.hideFooter false)) }}
+<footer class="footer">
+  <section class="container">
+    <p class="footer-line">
+      PFA · Persian (Farsi) · © {{ .Site.Params.author }} · MIT / CC-BY-SA 4.0
+    </p>
+    <p class="footer-links">
+      <a href="{{ "/" | relLangURL }}">Start</a> ·
+      <a href="{{ "/script/" | relLangURL }}">Script stage</a> ·
+      <a href="{{ "/level-a1/" | relLangURL }}">A1</a> ·
+      <a href="{{ "/level-a2/" | relLangURL }}">A2</a> ·
+      <a href="{{ "/level-b1/" | relLangURL }}">B1</a> ·
+      <a href="{{ "/materials/" | relLangURL }}">Materials</a> ·
+      <a href="{{ "/appendices/" | relLangURL }}">Appendices</a> ·
+      <a href="{{ "/appendices/style-guide/" | relLangURL }}">Course conventions</a> ·
+      <a href="{{ "/about/" | relLangURL }}">About</a>
+    </p>
+    <p class="footer-links">
+      <a href="https://boulingua.github.io/daf/">DaF</a> ·
+      <a href="https://boulingua.github.io/efl/">EFL</a> ·
+      <a href="https://boulingua.github.io/fle/">FLE</a> ·
+      <strong><a href="{{ "/impressum/" | relLangURL }}">Impressum</a></strong> ·
+      <strong><a href="{{ "/datenschutz/" | relLangURL }}">Datenschutz</a></strong> ·
+      <strong><a href="{{ "/haftungsausschluss/" | relLangURL }}">Haftungsausschluss</a></strong> ·
+      <a href="mailto:277736839+s-leboulanger@users.noreply.github.com">Kontakt</a>
+    </p>
+    {{- if (or (not .Site.Params.hideCredits) (eq .Site.Params.hideCredits false)) }}
+    <p class="footer-line credits">
+      Built with <a href="https://gohugo.io/">Hugo</a> + <a href="https://github.com/luizdepra/hugo-coder/">Coder</a>.
+    </p>
+    {{- end }}
+  </section>
+</footer>
+{{- end }}
